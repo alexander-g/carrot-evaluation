@@ -24,7 +24,7 @@ def main(args:argparse.Namespace):
         'versions':{
             'model': util.find_model_version(os.path.dirname(args.outputs)),
             'dataset': util.git_version(os.path.dirname(args.annotations)),
-            'evaluation': util.git_version('./'),
+            'evaluation': util.git_version(os.path.dirname(__file__)),
         }
     }
 
