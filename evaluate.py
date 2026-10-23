@@ -20,6 +20,13 @@ def get_argparser() -> argparse.ArgumentParser:
 
 
 def main(args:argparse.Namespace):
+    versions = {
+        'versions':{
+            'dataset': util.git_version(os.path.dirname(args.annotations)),
+            'evaluation': util.git_version('./'),
+        }
+    }
+
     file_pairs = collect_output_annotation_pairs(
         args.outputs, 
         args.annotations, 
@@ -36,7 +43,7 @@ def main(args:argparse.Namespace):
         all_metrics += [metrics]
         vis.save_visualization(args.outputs, outputfile, visrgb)
     outputfile = os.path.join(args.outputs, 'metrics.json')
-    metrics = save_metrics(all_metrics, [a for a,_ in file_pairs], outputfile)
+    metrics = save_metrics(outputfile, all_metrics, [a for a,_ in file_pairs], versions)
     # print('merged metrics:', metrics)
 
 
@@ -114,11 +121,15 @@ def evaluate_file_pair(outputfile:str, annotationfile:str):
     }, visrgb
 
 def save_metrics(
-    metrics: tp.List[tp.Dict[str,float]], 
-    files:   tp.List[str], 
     outputfile: str,
+    metrics:    tp.List[tp.Dict[str,float]], 
+    files:      tp.List[str], 
+    extras:     tp.Dict|None = None
 ):
-    jsondata = merge_metrics(metrics)
+    jsondata = {} # type: ignore [var-annotated]
+    if extras is not None:
+        jsondata = jsondata | extras
+    jsondata = jsondata | merge_metrics(metrics)
     for m,f in zip(metrics, files):
         jsondata[f] = m
     open(outputfile, 'w').write(json.dumps(jsondata, indent=2))

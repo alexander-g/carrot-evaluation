@@ -1,4 +1,5 @@
 import os
+import subprocess
 import typing as tp
 
 import numpy as np
@@ -94,8 +95,8 @@ def best_iou_matches(
     threshold: float
 ) -> IoU_Matches:
     
-    valid    = ioumatrix >= threshold
-    filtered = np.where(valid, ioumatrix, -np.inf)
+    valid     = ioumatrix >= threshold
+    ioumatrix = np.where(valid, ioumatrix, ioumatrix.min())
 
     matches0, matches1 = \
         scipy.optimize.linear_sum_assignment(ioumatrix, maximize=True)
@@ -119,4 +120,22 @@ def weighted_harmonic_mean(
         weights = np.asarray(weights, dtype=float)
 
     return np.sum(weights) / np.sum(weights / values)
+
+
+def git(folder:str, *args: str) -> str:
+    return subprocess.check_output(
+        ["git", "-C", str(folder), *args],
+        text   = True,
+        stderr = subprocess.DEVNULL,
+    ).strip()
+
+def git_version(folder: str) -> str|None:
+    try:
+        date = git(folder, "show", "-s", "--format=%cs", "HEAD")
+        commit_hash = git(folder, "rev-parse", "HEAD")
+        dirty = bool(git(folder, "status", "--porcelain"))
+
+        return f"{date}:{commit_hash}{'-dirty' if dirty else ''}"
+    except subprocess.CalledProcessError:
+        return None
 
