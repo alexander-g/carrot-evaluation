@@ -22,6 +22,7 @@ def get_argparser() -> argparse.ArgumentParser:
 def main(args:argparse.Namespace):
     versions = {
         'versions':{
+            'model': util.find_model_version(os.path.dirname(args.outputs)),
             'dataset': util.git_version(os.path.dirname(args.annotations)),
             'evaluation': util.git_version('./'),
         }
@@ -43,7 +44,8 @@ def main(args:argparse.Namespace):
         all_metrics += [metrics]
         vis.save_visualization(args.outputs, outputfile, visrgb)
     outputfile = os.path.join(args.outputs, 'metrics.json')
-    metrics = save_metrics(outputfile, all_metrics, [a for a,_ in file_pairs], versions)
+    filenames  = [os.path.basename(a) for a,_ in file_pairs]
+    metrics = save_metrics(outputfile, all_metrics, filenames, versions)
     # print('merged metrics:', metrics)
 
 

@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 import typing as tp
@@ -130,7 +131,12 @@ def git(folder:str, *args: str) -> str:
     ).strip()
 
 def git_version(folder: str) -> str|None:
+    folder = os.path.realpath(folder)
     try:
+        repo_root = git(folder, 'rev-parse', '--show-toplevel')
+        if repo_root != folder:
+            return None
+
         date = git(folder, "show", "-s", "--format=%cs", "HEAD")
         commit_hash = git(folder, "rev-parse", "HEAD")
         dirty = bool(git(folder, "status", "--porcelain"))
@@ -138,4 +144,15 @@ def git_version(folder: str) -> str|None:
         return f"{date}:{commit_hash}{'-dirty' if dirty else ''}"
     except subprocess.CalledProcessError:
         return None
+
+
+def find_model_version(path:str) -> str|None:
+    metajsonfile = os.path.join(path, 'meta.json')
+    if not os.path.exists(metajsonfile):
+        return None
+
+    with open(metajsonfile, 'r') as f:
+        meta = json.load(f)
+    
+    return meta.get('model', None)
 
