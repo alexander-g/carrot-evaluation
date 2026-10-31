@@ -112,7 +112,7 @@ def best_iou_matches(
 
 def weighted_harmonic_mean(
     values:  np.ndarray|list[float], 
-    weights: np.ndarray|None=None
+    weights: np.ndarray|list[float]|None = None
 ) -> float:
     values = np.asarray(values, dtype=float)
     if weights is None:

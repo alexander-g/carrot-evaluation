@@ -142,11 +142,14 @@ def merge_metrics(metrics:tp.List[tp.Dict[str,float]]) -> tp.Dict:
     if len(metrics) == 0:
         return {}
     
-    meankeys = ['precision', 'recall', 'mIoU']
-    sumkeys  = ['TP', 'FP', 'FN']
+    meankeys    = ['precision', 'recall', 'mIoU']
+    sumkeys     = ['TP', 'FP', 'FN']
     meanmetrics = {k:float(np.mean( [m[k]  for m in metrics] )) for k in meankeys}
+    meanvalues  = [v for v in meanmetrics.values()]
+    weights     = [1.0, 2.0, 1.0]  # recall more important
     meanmetrics = meanmetrics | {
-        'hmean': util.weighted_harmonic_mean([v for v in meanmetrics.values()])
+        'hmean':          util.weighted_harmonic_mean(meanvalues),
+        'weighted-hmean': util.weighted_harmonic_mean(meanvalues, weights),
     }
 
     summetrics  = {k:int(np.sum( [m[k]  for m in metrics] )) for k in sumkeys}
