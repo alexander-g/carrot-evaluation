@@ -45,7 +45,7 @@ def main(args:argparse.Namespace):
         vis.save_visualization(args.outputs, outputfile, visrgb)
     outputfile = os.path.join(args.outputs, 'metrics.json')
     filenames  = [os.path.basename(a) for a,_ in file_pairs]
-    metrics = save_metrics(outputfile, all_metrics, filenames, versions)
+    metrics = util.save_metrics(outputfile, all_metrics, filenames, versions)
     # print('merged metrics:', metrics)
 
 
@@ -121,44 +121,6 @@ def evaluate_file_pair(outputfile:str, annotationfile:str):
         'recall':    TP / (TP+FN),
         'mIoU':      mIoU,
     }, visrgb
-
-def save_metrics(
-    outputfile: str,
-    metrics:    tp.List[tp.Dict[str,float]], 
-    files:      tp.List[str], 
-    extras:     tp.Dict|None = None
-):
-    jsondata = {} # type: ignore [var-annotated]
-    if extras is not None:
-        jsondata = jsondata | extras
-    jsondata = jsondata | merge_metrics(metrics)
-    for m,f in zip(metrics, files):
-        jsondata[f] = m
-    open(outputfile, 'w').write(json.dumps(jsondata, indent=2))
-    return jsondata['mean']
-
-
-def merge_metrics(metrics:tp.List[tp.Dict[str,float]]) -> tp.Dict:
-    if len(metrics) == 0:
-        return {}
-    
-    meankeys = ['precision', 'recall', 'mIoU']
-    sumkeys  = ['TP', 'FP', 'FN']
-    meanmetrics = {k:float(np.mean( [m[k]  for m in metrics] )) for k in meankeys}
-    meanmetrics = meanmetrics | {
-        'hmean': util.weighted_harmonic_mean([v for v in meanmetrics.values()])
-    }
-
-    summetrics  = {k:int(np.sum( [m[k]  for m in metrics] )) for k in sumkeys}
-    summetrics  = summetrics | { # type: ignore
-        'precision': summetrics['TP'] / max(summetrics['TP'] + summetrics['FP'], 1),
-        'recall': summetrics['TP'] / max(summetrics['TP'] + summetrics['FN'], 1),
-    }
-    return {
-        'mean': meanmetrics,
-        'sum':  summetrics,
-    }
-
 
 
 
