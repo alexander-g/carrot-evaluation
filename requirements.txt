@@ -1,4 +1,5 @@
 numpy
 mypy
 pillow
+scikit-image
 scipy

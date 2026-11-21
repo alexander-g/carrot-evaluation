@@ -1,9 +1,15 @@
 ast_serialize==0.13.1
+ImageIO==2.38.1
+lazy-loader==0.6
 librt==0.16.0
 mypy==2.4.0
 mypy_extensions==1.1.0
+networkx==3.7
 numpy==2.5.4
+packaging==26.3
 pathspec==1.1.1
 pillow==13.0.0
+scikit-image==0.26.0
 scipy==1.18.1
+tifffile==2026.11.12
 typing_extensions==4.16.0
