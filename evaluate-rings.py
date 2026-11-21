@@ -25,7 +25,7 @@ def get_argparser() -> argparse.ArgumentParser:
         required = True, 
         help     = 'Path to folder with .ring_points.json and .treerings.png files'
     )
-    parser.add_argument('--annotations', required=True, help='Glob-like pattern')
+    parser.add_argument('--annotations', required=True, help='Path to split file')
     return parser
 
 
@@ -83,27 +83,28 @@ class FileTuple(tp.NamedTuple):
     ring_points_json: str
 
 def collect_output_annotation_pairs(
-    outputfolder: str, 
-    annotations:  str,
+    outputfolder:   str, 
+    annotationfile: str,
 ) -> list[FileTuple]:
-    anfiles  = sorted( glob.glob(annotations) )
+    input_annotation_pairs = util.load_file_tuples(annotationfile, ',', 2)
+    annotationfiles = [af for _,af in input_annotation_pairs]
 
     ring_points_pattern = os.path.join(outputfolder, '*.ring_points.json')
     ring_points_files   = sorted( glob.glob(ring_points_pattern) )
     treerings_pattern   = os.path.join(outputfolder, '*.treerings.png')
     treerings_files     = sorted( glob.glob(treerings_pattern) )
 
-    assert len(treerings_files) == len(ring_points_files) == len(anfiles), \
-        [len(treerings_files), len(ring_points_files), len(anfiles)]
+    assert len(treerings_files) == len(ring_points_files) == len(annotationfiles), \
+        [len(treerings_files), len(ring_points_files), len(annotationfiles)]
 
     output:list[FileTuple] = []
-    for i in range(len(anfiles)):
-        assert os.path.basename(anfiles[i]).split('.')[0] \
+    for i in range(len(annotationfiles)):
+        assert os.path.basename(annotationfiles[i]).split('.')[0] \
             == os.path.basename(treerings_files[i]).split('.')[0] \
             == os.path.basename(ring_points_files[i]).split('.')[0]
         
         output.append(
-            FileTuple(anfiles[i], treerings_files[i], ring_points_files[i])
+            FileTuple(annotationfiles[i], treerings_files[i], ring_points_files[i])
         )
     return output
 
