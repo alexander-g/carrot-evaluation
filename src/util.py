@@ -156,3 +156,50 @@ def find_model_version(path:str) -> str|None:
     
     return meta.get('model', None)
 
+
+def save_metrics(
+    outputfile: str,
+    metrics:    tp.List[tp.Dict[str,float]], 
+    files:      tp.List[str], 
+    extras:     tp.Dict|None = None,
+    **kw,
+):
+    jsondata = {} # type: ignore [var-annotated]
+    if extras is not None:
+        jsondata = jsondata | extras
+    jsondata = jsondata | merge_metrics(metrics, **kw)
+    for m,f in zip(metrics, files):
+        jsondata[f] = m
+    open(outputfile, 'w').write(json.dumps(jsondata, indent=2))
+    return jsondata['mean']
+
+
+
+DEFAULT_MEAN_METRICS = ['precision', 'recall', 'mIoU']
+DEFAULT_SUM_METRICS  = ['TP', 'FP', 'FN']
+
+def merge_metrics(
+    metrics:     list[dict[str,float]],
+    meanmetrics: list[str]|None = None,
+    summetrics:  list[str]|None = None,
+) -> tp.Dict:
+    if len(metrics) == 0:
+        return {}
+    
+    meankeys:list[str] = meanmetrics or DEFAULT_MEAN_METRICS
+    sumkeys:list[str]  = summetrics  or DEFAULT_SUM_METRICS
+    meanvalues = {k:float(np.mean( [m[k]  for m in metrics] )) for k in meankeys}
+    meanvalues = meanvalues | {
+        'hmean': weighted_harmonic_mean([v for v in meanvalues.values()])
+    }
+
+    sumvalues  = {k:int(np.sum( [m[k]  for m in metrics] )) for k in sumkeys}
+    sumvalues  = sumvalues | { # type: ignore
+        'precision': sumvalues['TP'] / max(sumvalues['TP'] + sumvalues['FP'], 1),
+        'recall': sumvalues['TP'] / max(sumvalues['TP'] + sumvalues['FN'], 1),
+    }
+    return {
+        'mean': meanvalues,
+        'sum':  sumvalues,
+    }
+
